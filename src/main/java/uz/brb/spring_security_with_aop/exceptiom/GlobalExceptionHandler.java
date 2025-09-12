@@ -10,6 +10,8 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
 import uz.brb.spring_security_with_aop.dto.response.Response;
 
 import java.time.LocalDateTime;
@@ -88,6 +90,19 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    // 400
+    @ExceptionHandler(InvalidHeadersException.class)
+    public Response<?> handleInvalidHeaders(InvalidHeadersException ex, WebRequest request) {
+        return Response.builder()
+                .code(HttpStatus.BAD_REQUEST.value())
+                .status(HttpStatus.BAD_REQUEST)
+                .message(ex.getMessage())
+                .success(false)
+                .timestamp(LocalDateTime.now().toString())
+                .path(((ServletWebRequest) request).getRequest().getRequestURI())
+                .build();
+    }
+
     // 404 - Resource topilmadi
     @ExceptionHandler(ResourceNotFoundException.class)
     public Response<?> handleResourceNotFoundException(ResourceNotFoundException resourceNotFoundException,
@@ -138,6 +153,19 @@ public class GlobalExceptionHandler {
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())   // Internal Server Error request kodi
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .message("Something wrong -> " + exception.getMessage())
+                .success(false)
+                .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
+                .build();
+    }
+
+    // 500
+    @ExceptionHandler(JsonConversionException.class)
+    public Response<?> handleJsonConversionException(JsonConversionException ex, HttpServletRequest request) {
+        return Response.builder()
+                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .message("JSON conversion error: " + ex.getMessage())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
                 .path(request.getRequestURI())
