@@ -1,5 +1,6 @@
 package uz.brb.spring_security_with_aop.exceptiom;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,7 +23,8 @@ import static uz.brb.spring_security_with_aop.util.Util.localDateTimeFormatter;
 public class GlobalExceptionHandler {
     // dto va request validatsiya xatolari
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Response<?> exception(MethodArgumentNotValidException e) {
+    public Response<?> exception(MethodArgumentNotValidException e,
+                                 HttpServletRequest request) {
         Map<String, String> errors = e.getBindingResult().getFieldErrors()
                 .stream()
                 .collect(Collectors.toMap(
@@ -35,12 +37,14 @@ public class GlobalExceptionHandler {
                 .errors(errors)
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 400 - Parametr validatsiya
     @ExceptionHandler(ConstraintViolationException.class)
-    public Response<?> handleConstraintViolation(ConstraintViolationException ex) {
+    public Response<?> handleConstraintViolation(ConstraintViolationException ex,
+                                                 HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(v ->
                 errors.put(v.getPropertyPath().toString(), v.getMessage())
@@ -52,78 +56,91 @@ public class GlobalExceptionHandler {
                 .success(false)
                 .errors(errors)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 400 - Noto‘g‘ri argument yuborilgan
     @ExceptionHandler(IllegalArgumentException.class)
-    public Response<?> handleIllegalArgumentException(IllegalArgumentException ex) {
+    public Response<?> handleIllegalArgumentException(IllegalArgumentException ex,
+                                                      HttpServletRequest request) {
         return Response.builder()
                 .code(HttpStatus.BAD_REQUEST.value())
                 .status(HttpStatus.BAD_REQUEST)
                 .message("Invalid argument: " + ex.getMessage())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 400
     @ExceptionHandler(BadRequestException.class)
-    public Response<?> handleBadRequestFoundException(BadRequestException badRequestException) {
+    public Response<?> handleBadRequestFoundException(BadRequestException badRequestException,
+                                                      HttpServletRequest request) {
         return Response.builder()
                 .code(HttpStatus.BAD_REQUEST.value())
                 .status(HttpStatus.BAD_REQUEST)
                 .message(badRequestException.getMessage())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 404 - Resource topilmadi
     @ExceptionHandler(ResourceNotFoundException.class)
-    public Response<?> handleResourceNotFoundException(ResourceNotFoundException resourceNotFoundException) {
+    public Response<?> handleResourceNotFoundException(ResourceNotFoundException resourceNotFoundException,
+                                                       HttpServletRequest request) {
         return Response.builder()
                 .code(HttpStatus.NOT_FOUND.value())  // Not found request kodi
                 .status(HttpStatus.NOT_FOUND)
                 .message(resourceNotFoundException.getMessage())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 405 - Noto'g'ri HTTP metod
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public Response<?> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+    public Response<?> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
+                                                HttpServletRequest request) {
         return Response.builder()
                 .code(HttpStatus.METHOD_NOT_ALLOWED.value())
                 .status(HttpStatus.METHOD_NOT_ALLOWED)
                 .message("Method not allowed: " + ex.getMethod())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 409 - DB constraint buzilgan (masalan duplicate key)
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public Response<?> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    public Response<?> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+                                                    HttpServletRequest request) {
         return Response.builder()
                 .code(HttpStatus.CONFLICT.value())
                 .status(HttpStatus.CONFLICT)
                 .message("Conflict: " + ex.getRootCause().getMessage())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 
     // 500 Server xatoligi
     @ExceptionHandler(Exception.class)
-    public Response<?> handleException(Exception exception) {
+    public Response<?> handleException(Exception exception,
+                                       HttpServletRequest request) {
         return Response.builder()
                 .code(HttpStatus.INTERNAL_SERVER_ERROR.value())   // Internal Server Error request kodi
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .message("Something wrong -> " + exception.getMessage())
                 .success(false)
                 .timestamp(localDateTimeFormatter(LocalDateTime.now()))
+                .path(request.getRequestURI())
                 .build();
     }
 }
