@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @OpenAPIDefinition(
         info = @Info(version = "2.6.0",
-                description = "API Documentation"),
+                description = "Spring Security With AOP API Documentation"),
         servers = @Server(url = "http://localhost:4466", description = "Local Server"),
         security = @SecurityRequirement(name = "bearerAuth")
 )
